@@ -1,23 +1,5 @@
 #include "Paper.h"
 
-/* extern */
-
-/************************
-		 Dot
-		  .
-		 ...
-		.....
-		 ...
-		  .
-************************/
-extern std::map<int, std::vector<int>> mapDotRange = {
-	{-2,{0}},
-	{-1,{-1,0,1}},
-	{0,{-2,-1,0,1,2}},
-	{1,{-1,0,1}},
-	{2,{0}}
-};
-
 Paper::Paper()
 {
 	m_CImage = new CImage();
@@ -66,109 +48,81 @@ void Paper::Add(Shape* shape)
 
 void Paper::Clear()
 {
+	for (int i = 0; i < m_nHeight; i++) {
+		for (int j = 0; j < m_nWidth; j++) {
+			m_pBits[i * m_nPitch + j] = WHITE;
+		}
+	}
+
 	for (int i = 0; i < m_vecDots.size(); i++) {
 		if (m_vecDots[i] != 0)
 			delete m_vecDots[i];
 	}
-	m_vecDots.clear();
-	m_listDots.clear();
 
 	if (m_pCircle != 0) {
 		delete m_pCircle;
 		m_pCircle = nullptr;
 	}
 
-	for (int i = 0; i < m_nHeight; i++) {
-		for (int j = 0; j < m_nWidth; j++) {
-			m_pBits[i * m_nPitch + j] = WHITE;
-		}
-	}
+	m_vecDots.clear();
+	m_listDots.clear();
 }
 
 void Paper::Draw(CDC* dc)
 {
-	int dx;
-	int dy;
-	int startX;
-	int startY;
+	int x;
+	int y;
+	int nCenterX;
+	int nCenterY;
+	int nMaxX;
+	int nMaxY;
+	int nRadius;
+	double dDistance;
 
 	for (int i = 0; i < m_vecDots.size(); i++)
 	{
 		Shape* dot = m_vecDots[i];
-		startX = dot->GetX();
-		startY = dot->GetY();
+		nCenterX = dot->GetX();
+		nCenterY = dot->GetY();
 
-		for (auto& dotRange : mapDotRange)
-		{
-			dy = startY - dotRange.first;
+		nRadius = m_nThickness;
+		nMaxX = nCenterX + nRadius;
+		nMaxY = nCenterY + nRadius;
+		if (nMaxX > m_nWidth) nMaxX = m_nWidth;
+		if (nMaxY > m_nHeight) nMaxY = m_nHeight;
 
-			std::vector<int>& dotXRange = dotRange.second;
-			for (int j = 0; j < dotXRange.size(); j++)
-			{
-				dx = startX - dotXRange[j];
-				if (dy >= 0 && dy < m_nHeight && dx >= 0 && dx < m_nWidth)
-					m_pBits[dy * m_nPitch + dx] = BLACK;
+		x = nCenterX - nRadius + 1;
+		if (x < 0) x = 0;
+		for (x; x < nMaxX; x++) {
+			y = nCenterY - nRadius + 1;
+			if (y < 0) y = 0;
+			for (y; y < nMaxY; y++) {
+				dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
+				if (dDistance <= nRadius)
+					m_pBits[y * m_nPitch + x] = BLACK;
 			}
 		}
 	}
 
 	if (m_pCircle != 0)
 	{
-		int nCenterX = m_pCircle->GetX();
-		int nCenterY = m_pCircle->GetY();
-		int nRadius = m_pCircle->GetRadius();
-		int x = nCenterX - nRadius;
-		int y = nCenterY;
+		nCenterX = m_pCircle->GetX();
+		nCenterY = m_pCircle->GetY();
+		nRadius = m_pCircle->GetRadius();
+		nMaxX = nCenterX + nRadius + m_nThickness / 2;
+		nMaxY = nCenterY + nRadius + m_nThickness / 2;;
+		if (nMaxX > m_nWidth) nMaxX = m_nWidth;
+		if (nMaxY > m_nHeight) nMaxY = m_nHeight;
 
-		while (y >= nCenterY - nRadius - m_nThickness / 2)
-		{
-			x = nCenterX;
-			while (x >= nCenterX - nRadius - m_nThickness / 2) {
-				double dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
+		x = nCenterX - nRadius - m_nThickness / 2;
+		for (x; x < nMaxX; x++) {
+			y = nCenterY - nRadius - m_nThickness / 2;
+			if (y < 0) y = 0;
+			for (y; y <= nMaxY; y++) {
+				dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
 				if (dDistance >= nRadius - m_nThickness / 2 && dDistance <= nRadius + m_nThickness / 2)
 					m_pBits[y * m_nPitch + x] = BLACK;
-				x--;
 			}
-			y--;
-		}
-
-		y = nCenterY - nRadius - m_nThickness / 2;
-		while (y <= nCenterY)
-		{
-			x = nCenterX;
-			while (x <= nCenterX + nRadius + m_nThickness / 2) {
-				double dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
-				if (dDistance >= nRadius - m_nThickness / 2 && dDistance <= nRadius + m_nThickness / 2)
-					m_pBits[y * m_nPitch + x] = BLACK;
-				x++;
-			}
-			y++;
-		}
-
-		y = nCenterY;
-		while (y <= nCenterY + nRadius + m_nThickness / 2)
-		{
-			x = nCenterX;
-			while (x <= nCenterX + nRadius + m_nThickness / 2) {
-				double dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
-				if (dDistance >= nRadius - m_nThickness / 2 && dDistance <= nRadius + m_nThickness / 2)
-					m_pBits[y * m_nPitch + x] = BLACK;
-				x++;
-			}
-			y++;
-		}
-
-		y = nCenterY + nRadius + m_nThickness / 2;
-		while (y >= nCenterY)
-		{
-			x = nCenterX;
-			while (x >= nCenterX - nRadius - m_nThickness / 2) {
-				double dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
-				if (dDistance >= nRadius - m_nThickness / 2 && dDistance <= nRadius + m_nThickness / 2)
-					m_pBits[y * m_nPitch + x] = BLACK;
-				x--;
-			}
-			y--;
 		}
 	}
 

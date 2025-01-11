@@ -35,8 +35,8 @@ BOOL MainView::OnInitDialog()
 	m_pPaper = new Paper();
 	m_pPaper->Erase();
 
-	m_CEditRadius.SetWindowText(_T("5"));
-	m_CEditThickness.SetWindowText(_T("1"));
+	m_CEditRadius.SetWindowText(_T("100"));
+	m_CEditThickness.SetWindowText(_T("10"));
 
 	Invalidate(FALSE);
 
