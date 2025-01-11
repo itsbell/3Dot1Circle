@@ -1,7 +1,24 @@
 #include "Paper.h"
-#include "Common.h"
 
-Paper::Paper(CRect rect)
+/* extern */
+
+/************************
+ 		 Dot
+		  .  
+		 ...
+		.....
+		 ...
+		  .
+************************/
+extern std::map<int, std::vector<int>> mapDotRange = {
+	{-2,{0}},
+	{-1,{-1,0,1}},
+	{0,{-2,-1,0,1,2}},
+	{1,{-1,0,1}},
+	{2,{0}}
+};
+
+Paper::Paper()
 {
 	m_CImage = new CImage();
 	m_CImage->Create(WIDTH, HEIGHT, BPP8);
@@ -12,6 +29,13 @@ Paper::Paper(CRect rect)
 			rgb[i].rgbRed = rgb[i].rgbGreen = rgb[i].rgbBlue = i;
 		m_CImage->SetColorTable(0, 256, rgb);
 	}
+	m_nWidth = m_CImage->GetWidth();
+	m_nHeight = m_CImage->GetHeight();
+	m_nPitch = m_CImage->GetPitch();
+	m_pBits = static_cast<unsigned char*>(m_CImage->GetBits());
+
+	m_nThickness = 0;
+	m_pFocusDot = nullptr;
 }
 
 Paper::~Paper()
@@ -19,23 +43,94 @@ Paper::~Paper()
 	if (m_CImage != 0) {
 		delete m_CImage;
 	}
+	for (int i = 0; i < m_vecDots.size(); i++) {
+		if (m_vecDots[i] != 0)
+			delete m_vecDots[i];
+	}
+	m_vecDots.clear();
 }
 
-void Paper::Draw(CClientDC* dc)
+void Paper::Add(Dot* dot)
 {
+	m_vecDots.push_back(dot);
+	m_listDotsOrder.push_front(dot);
+}
+
+void Paper::Clear()
+{
+	for (int i = 0; i < m_vecDots.size(); i++) {
+		if (m_vecDots[i] != 0)
+			delete m_vecDots[i];
+	}
+	m_vecDots.clear();
+
+	for (int i = 0; i < m_nHeight; i++) {
+		for (int j = 0; j < m_nWidth; j++) {
+			m_pBits[i * m_nPitch + j] = WHITE;
+		}
+	}
+}
+
+void Paper::Draw(CDC* dc)
+{
+	int dx;
+	int dy;
+	int startX;
+	int startY;
+
+	for (int i = 0; i < m_vecDots.size(); i++)
+	{
+		Dot* dot = m_vecDots[i];
+		startX = dot->GetX();
+		startY = dot->GetY();
+
+		for (auto &dotRange : mapDotRange)
+		{
+			dy = startY - dotRange.first;
+
+			std::vector<int>& dotXRange = dotRange.second;
+			for (int j = 0; j < dotXRange.size(); j++)
+			{
+				dx = startX - dotXRange[j];
+				if (dy >= 0 && dy < m_nHeight && dx >= 0 && dx < m_nWidth)
+					m_pBits[dy * m_nPitch + dx] = BLACK;
+			}
+		}
+	}
 	m_CImage->Draw(*dc, 0, PADDING);
 }
 
 void Paper::Erase()
 {
-	int nWidth = m_CImage->GetWidth();
-	int nHeight = m_CImage->GetHeight();
-	int nPitch = m_CImage->GetPitch();
-
-	unsigned char* fm = static_cast<unsigned char*>(m_CImage->GetBits());
-	for (int i = 0; i < nHeight; i++) {
-		for (int j = 0; j < nWidth; j++) {
-			fm[i * nPitch + j] = WHITE;
+	for (int i = 0; i < m_nHeight; i++) {
+		for (int j = 0; j < m_nWidth; j++) {
+			m_pBits[i * m_nPitch + j] = WHITE;
 		}
+	}
+}
+
+Dot* Paper::FindByPoint(CPoint point)
+{
+	double distance;
+	Dot* pDot = nullptr;
+	Dot* pResultDot = nullptr;
+
+	for (std::list<Dot*>::iterator it = m_listDotsOrder.begin(); it != m_listDotsOrder.end(); ++it) {
+		distance = sqrt(pow((*it)->GetX() - point.x, 2) + pow((*it)->GetY() - point.y, 2));
+		if (distance <= m_nThickness) {
+			pResultDot = (*it);
+			break;
+		}
+	}
+
+	return pResultDot;
+}
+
+void Paper::Move(CPoint point)
+{
+	if (m_pFocusDot != nullptr)
+	{
+		m_pFocusDot->SetX(point.x);
+		m_pFocusDot->SetY(point.y);
 	}
 }

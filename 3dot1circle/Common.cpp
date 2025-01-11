@@ -6,6 +6,11 @@ Dot::Dot(int x, int y) {
 	this->y = y;
 }
 
+Dot::Dot(CPoint point) {
+	this->x = point.x;
+	this->y = point.y;
+}
+
 Dot::~Dot() {
 
 }

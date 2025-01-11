@@ -2,6 +2,15 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
+#include <afxwin.h>
+#include <vector>
+#include <list>
+#include <map>
+#include <cmath>
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Define */
 #define PADDING 50
 #define WIDTH 500
 #define HEIGHT 500
@@ -13,9 +22,12 @@
 class Dot {
 public:
 	Dot(int x, int y);
+	Dot(CPoint point);
 	~Dot();
 	int GetX() const;
 	int GetY() const;
+	void SetX(int val) { x = val; };
+	void SetY(int val) { y = val; };
 private:
 	int x;
 	int y;
