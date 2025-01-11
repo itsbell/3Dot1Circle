@@ -3,8 +3,8 @@
 /* extern */
 
 /************************
- 		 Dot
-		  .  
+		 Dot
+		  .
 		 ...
 		.....
 		 ...
@@ -36,24 +36,32 @@ Paper::Paper()
 
 	m_nThickness = 0;
 	m_pFocusDot = nullptr;
+	m_pCircle = nullptr;
 }
 
 Paper::~Paper()
 {
-	if (m_CImage != 0) {
+	if (m_CImage != 0)
 		delete m_CImage;
-	}
+
 	for (int i = 0; i < m_vecDots.size(); i++) {
 		if (m_vecDots[i] != 0)
 			delete m_vecDots[i];
 	}
-	m_vecDots.clear();
+
+	if (m_pCircle != 0)
+		delete m_pCircle;
 }
 
-void Paper::Add(Dot* dot)
+void Paper::Add(Shape* shape)
 {
-	m_vecDots.push_back(dot);
-	m_listDotsOrder.push_front(dot);
+	if (Dot* dot = dynamic_cast<Dot*>(shape)) {
+		m_vecDots.push_back(shape);
+		m_listDots.push_front(shape);
+	}
+	else if (Circle* circle = dynamic_cast<Circle*>(shape)) {
+		m_pCircle = shape;
+	}
 }
 
 void Paper::Clear()
@@ -63,6 +71,12 @@ void Paper::Clear()
 			delete m_vecDots[i];
 	}
 	m_vecDots.clear();
+	m_listDots.clear();
+
+	if (m_pCircle != 0) {
+		delete m_pCircle;
+		m_pCircle = nullptr;
+	}
 
 	for (int i = 0; i < m_nHeight; i++) {
 		for (int j = 0; j < m_nWidth; j++) {
@@ -80,11 +94,11 @@ void Paper::Draw(CDC* dc)
 
 	for (int i = 0; i < m_vecDots.size(); i++)
 	{
-		Dot* dot = m_vecDots[i];
+		Shape* dot = m_vecDots[i];
 		startX = dot->GetX();
 		startY = dot->GetY();
 
-		for (auto &dotRange : mapDotRange)
+		for (auto& dotRange : mapDotRange)
 		{
 			dy = startY - dotRange.first;
 
@@ -97,6 +111,67 @@ void Paper::Draw(CDC* dc)
 			}
 		}
 	}
+
+	if (m_pCircle != 0)
+	{
+		int nCenterX = m_pCircle->GetX();
+		int nCenterY = m_pCircle->GetY();
+		int nRadius = m_pCircle->GetRadius();
+		int x = nCenterX - nRadius;
+		int y = nCenterY;
+
+		while (y >= nCenterY - nRadius - m_nThickness / 2)
+		{
+			x = nCenterX;
+			while (x >= nCenterX - nRadius - m_nThickness / 2) {
+				double dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
+				if (dDistance >= nRadius - m_nThickness / 2 && dDistance <= nRadius + m_nThickness / 2)
+					m_pBits[y * m_nPitch + x] = BLACK;
+				x--;
+			}
+			y--;
+		}
+
+		y = nCenterY - nRadius - m_nThickness / 2;
+		while (y <= nCenterY)
+		{
+			x = nCenterX;
+			while (x <= nCenterX + nRadius + m_nThickness / 2) {
+				double dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
+				if (dDistance >= nRadius - m_nThickness / 2 && dDistance <= nRadius + m_nThickness / 2)
+					m_pBits[y * m_nPitch + x] = BLACK;
+				x++;
+			}
+			y++;
+		}
+
+		y = nCenterY;
+		while (y <= nCenterY + nRadius + m_nThickness / 2)
+		{
+			x = nCenterX;
+			while (x <= nCenterX + nRadius + m_nThickness / 2) {
+				double dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
+				if (dDistance >= nRadius - m_nThickness / 2 && dDistance <= nRadius + m_nThickness / 2)
+					m_pBits[y * m_nPitch + x] = BLACK;
+				x++;
+			}
+			y++;
+		}
+
+		y = nCenterY + nRadius + m_nThickness / 2;
+		while (y >= nCenterY)
+		{
+			x = nCenterX;
+			while (x >= nCenterX - nRadius - m_nThickness / 2) {
+				double dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
+				if (dDistance >= nRadius - m_nThickness / 2 && dDistance <= nRadius + m_nThickness / 2)
+					m_pBits[y * m_nPitch + x] = BLACK;
+				x--;
+			}
+			y--;
+		}
+	}
+
 	m_CImage->Draw(*dc, 0, PADDING);
 }
 
@@ -109,13 +184,13 @@ void Paper::Erase()
 	}
 }
 
-Dot* Paper::FindByPoint(CPoint point)
+Shape* Paper::FindByPoint(CPoint point)
 {
 	double distance;
-	Dot* pDot = nullptr;
-	Dot* pResultDot = nullptr;
+	Shape* pDot = nullptr;
+	Shape* pResultDot = nullptr;
 
-	for (std::list<Dot*>::iterator it = m_listDotsOrder.begin(); it != m_listDotsOrder.end(); ++it) {
+	for (std::list<Shape*>::iterator it = m_listDots.begin(); it != m_listDots.end(); ++it) {
 		distance = sqrt(pow((*it)->GetX() - point.x, 2) + pow((*it)->GetY() - point.y, 2));
 		if (distance <= m_nThickness) {
 			pResultDot = (*it);
@@ -124,6 +199,11 @@ Dot* Paper::FindByPoint(CPoint point)
 	}
 
 	return pResultDot;
+}
+
+Shape* Paper::GetAt(int index)
+{
+	return m_vecDots[index];
 }
 
 void Paper::Move(CPoint point)

@@ -10,7 +10,7 @@ IMPLEMENT_DYNAMIC(MainView, CDialog)
 MainView::MainView(CWnd* pParent /*=nullptr*/)
 	: CDialog(IDD_MAIN_VIEW, pParent)
 {
-
+	m_pPaper = nullptr;
 }
 
 MainView::~MainView()
@@ -35,8 +35,8 @@ BOOL MainView::OnInitDialog()
 	m_pPaper = new Paper();
 	m_pPaper->Erase();
 
-	m_CEditRadius.SetWindowText(_T("0"));
-	m_CEditThickness.SetWindowText(_T("0"));
+	m_CEditRadius.SetWindowText(_T("5"));
+	m_CEditThickness.SetWindowText(_T("1"));
 
 	Invalidate(FALSE);
 
@@ -103,20 +103,82 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 		{
 			m_pPaper->SetThickness(nThickness);
 
-			Dot* dot;
-			dot = m_pPaper->FindByPoint(point);
+			Shape* shape;
+			shape = m_pPaper->FindByPoint(point);
 
-			if (dot != nullptr)
+			if (shape != nullptr)
 			{
-				m_pPaper->SetFocusDot(dot);
+				m_pPaper->SetFocusDot(shape);
 			}
 			else
 			{
-				int nDotCnt = m_pPaper->GetDotCount();
-				if (nDotCnt < 3)
+				size_t nDotCnt = m_pPaper->GetDotCount();
+				if (nDotCnt < MAX_DOTS)
 				{
-					dot = new Dot(point);
-					m_pPaper->Add(dot);
+					shape = new Dot(point);
+					m_pPaper->Add(shape);
+
+					nDotCnt = m_pPaper->GetDotCount();
+					if (nDotCnt == MAX_DOTS)
+					{
+						double nDistance;
+						bool bIsCenter = false;
+						int nCenterX = shape->GetX() - nRadius;
+						int nCenterY = shape->GetY();
+						for (nCenterX; nCenterX < shape->GetX() + nRadius && bIsCenter == false; nCenterX++)
+						{
+							bIsCenter = true;
+							for (int i = 0; i < m_pPaper->GetDotCount(); i++)
+							{
+								Shape* dot = m_pPaper->GetAt(i);
+								nDistance = sqrt(pow(nCenterX - dot->GetX(), 2) + pow(nCenterY - dot->GetY(), 2));
+								if (abs(nDistance - nRadius) > 3)
+								{
+									bIsCenter = false;
+									break;
+								}
+							}
+							if (bIsCenter == true) {
+								Shape* circle = new Circle(nCenterX, nCenterY, nRadius);
+								m_pPaper->Add(circle);
+								break;
+							}
+							if (nCenterX < shape->GetX())
+								nCenterY--;
+							else {
+								nCenterY++;
+							}
+						}
+						for (nCenterX; nCenterX > shape->GetX() - nRadius && bIsCenter == false; nCenterX--)
+						{
+							bIsCenter = true;
+							for (int i = 0; i < m_pPaper->GetDotCount(); i++)
+							{
+								Shape* dot = m_pPaper->GetAt(i);
+								nDistance = sqrt(pow(nCenterX - dot->GetX(), 2) + pow(nCenterY - dot->GetY(), 2));
+								if (abs(nDistance - nRadius) > 1)
+								{
+									bIsCenter = false;
+									break;
+								}
+							}
+							if (bIsCenter == true) {
+								if (m_pPaper->GetCircle() != 0)
+								{
+									delete m_pPaper->GetCircle();
+									m_pPaper->SetCircle(nullptr);
+								}
+								Shape* circle = new Circle(nCenterX, nCenterY, nRadius);
+								m_pPaper->Add(circle);
+								break;
+							}
+							if (nCenterX > shape->GetX())
+								nCenterY++;
+							else {
+								nCenterY--;
+							}
+						}
+					}
 					Invalidate(FALSE);
 				}
 			}
@@ -137,11 +199,87 @@ void MainView::OnLButtonUp(UINT nFlags, CPoint point)
 
 void MainView::OnMouseMove(UINT nFlags, CPoint point)
 {
-	Dot* dot = m_pPaper->GetFocusDot();
-	if (dot != nullptr)
+	Shape* shape = m_pPaper->GetFocusDot();
+	if (shape != nullptr)
 	{
 		point.y -= PADDING;
 		m_pPaper->Move(point);
+
+		size_t nDotCnt = m_pPaper->GetDotCount();
+		if (nDotCnt == MAX_DOTS)
+		{
+			CString strRadius, strThickness;
+			m_CEditRadius.GetWindowText(strRadius);
+			int nRadius = _ttoi(strRadius);
+
+			double nDistance;
+			bool bIsCenter = false;
+			int nCenterX = shape->GetX() - nRadius;
+			int nCenterY = shape->GetY();
+			for (nCenterX; nCenterX < shape->GetX() + nRadius && bIsCenter == false; nCenterX++)
+			{
+				bIsCenter = true;
+				for (int i = 0; i < m_pPaper->GetDotCount(); i++)
+				{
+					Shape* dot = m_pPaper->GetAt(i);
+					nDistance = sqrt(pow(nCenterX - dot->GetX(), 2) + pow(nCenterY - dot->GetY(), 2));
+					if (abs(nDistance - nRadius) > 1)
+					{
+						bIsCenter = false;
+						break;
+					}
+				}
+				if (bIsCenter == true) {
+					Shape* circle = new Circle(nCenterX, nCenterY, nRadius);
+					m_pPaper->Add(circle);
+					break;
+				}
+				if (nCenterX < shape->GetX())
+					nCenterY--;
+				else {
+					nCenterY++;
+				}
+			}
+			for (nCenterX; nCenterX > shape->GetX() - nRadius && bIsCenter == false; nCenterX--)
+			{
+				bIsCenter = true;
+				for (int i = 0; i < m_pPaper->GetDotCount(); i++)
+				{
+					Shape* dot = m_pPaper->GetAt(i);
+					nDistance = sqrt(pow(nCenterX - dot->GetX(), 2) + pow(nCenterY - dot->GetY(), 2));
+					if (abs(nDistance - nRadius) > 1)
+					{
+						bIsCenter = false;
+						break;
+					}
+				}
+				if (bIsCenter == true) {
+					if (m_pPaper->GetCircle() != 0)
+					{
+						delete m_pPaper->GetCircle();
+						m_pPaper->SetCircle(nullptr);
+					}
+					Shape* circle = new Circle(nCenterX, nCenterY, nRadius);
+					m_pPaper->Add(circle);
+					break;
+				}
+				if (nCenterX > shape->GetX())
+					nCenterY++;
+				else {
+					nCenterY--;
+				}
+			}
+			if (bIsCenter == false)
+			{
+				if (m_pPaper->GetCircle() != 0)
+				{
+					delete m_pPaper->GetCircle();
+					m_pPaper->SetCircle(nullptr);
+				}
+				
+			}
+		}
+
 		Invalidate(FALSE);
 	}
 

@@ -11,19 +11,22 @@ public:
 	Paper();
 	~Paper();
 
-	void Add(Dot* dot);
+	void Add(Shape* dot);
 	void Clear();
 	void Draw(CDC* dc);
 	void Erase();
-	Dot* FindByPoint(CPoint point);
+	Shape* FindByPoint(CPoint point);
+	Shape* GetAt(int index);
 	void Move(CPoint point);
 
-	int GetDotCount() const;
-	Dot* GetFocusDot() const;
-	int GetThickness() const;
+	Shape* GetCircle() const { return m_pCircle; };
+	size_t GetDotCount() const { return m_vecDots.size(); };
+	Shape* GetFocusDot() const { return m_pFocusDot; };
+	int GetThickness() const { return m_nThickness; };
 	
+	void SetCircle(Shape* shape) { m_pCircle = shape; };
 	void SetThickness(int thickness) { m_nThickness = thickness; };
-	void SetFocusDot(Dot* dot) { m_pFocusDot = dot; };
+	void SetFocusDot(Shape* dot) { m_pFocusDot = dot; };
 
 private:
 	CImage* m_CImage;
@@ -33,21 +36,11 @@ private:
 	unsigned char* m_pBits;
 
 	int m_nThickness;
-	Dot* m_pFocusDot;
-	std::vector<Dot*> m_vecDots;
-	std::list<Dot*> m_listDotsOrder;
+	Shape* m_pFocusDot;
+	std::vector<Shape*> m_vecDots;
+	std::list<Shape*> m_listDots; // z-order
 
+	Shape* m_pCircle;
 };
 
-inline int Paper::GetDotCount() const {
-	return m_vecDots.size();
-}
-
-inline Dot* Paper::GetFocusDot() const {
-	return m_pFocusDot;
-}
-
-inline int Paper::GetThickness() const {
-	return m_nThickness;
-}
 #endif //_PAPER_H
