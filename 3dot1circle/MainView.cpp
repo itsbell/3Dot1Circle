@@ -208,81 +208,62 @@ void MainView::OnMouseMove(UINT nFlags, CPoint point)
 		size_t nDotCnt = m_pPaper->GetDotCount();
 		if (nDotCnt == MAX_DOTS)
 		{
-			CString strRadius, strThickness;
-			m_CEditRadius.GetWindowText(strRadius);
-			int nRadius = _ttoi(strRadius);
+			auto start = std::chrono::high_resolution_clock::now();
 
-			double nDistance;
+			int x;
+			int y;
+			int nCenterX;
+			int nCenterY;
+			int nMaxX;
+			int nMaxY;
+			int nRadius;
 			bool bIsCenter = false;
-			int nCenterX = shape->GetX() - nRadius;
-			int nCenterY = shape->GetY();
-			for (nCenterX; nCenterX < shape->GetX() + nRadius && bIsCenter == false; nCenterX++)
-			{
-				bIsCenter = true;
-				for (int i = 0; i < m_pPaper->GetDotCount(); i++)
-				{
-					Shape* dot = m_pPaper->GetAt(i);
-					nDistance = sqrt(pow(nCenterX - dot->GetX(), 2) + pow(nCenterY - dot->GetY(), 2));
-					if (abs(nDistance - nRadius) > 1)
-					{
-						bIsCenter = false;
-						break;
+			double dDistance;
+			CString strRadius;
+			std::vector<double> vecDistances;
+
+			m_CEditRadius.GetWindowText(strRadius);
+			nRadius = _ttoi(strRadius);
+
+			nCenterX = shape->GetX();
+			nCenterY = shape->GetY();
+			nMaxX = nCenterX + nRadius;
+			nMaxY = nCenterY + nRadius;
+
+			for (x = nCenterX - nRadius; x < nMaxX && bIsCenter == false; x++) {
+				for (y = nCenterY - nRadius; y < nMaxY && bIsCenter == false; y++) {
+					bIsCenter = true;
+					for (int i = 0; i < m_pPaper->GetDotCount(); i++) {
+						Shape* shape = m_pPaper->GetAt(i);
+						nCenterX = shape->GetX();
+						nCenterY = shape->GetY();
+						dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
+						if (dDistance < nRadius - 1 || dDistance > nRadius + 1) {
+							bIsCenter = false;
+							break;
+						}
 					}
-				}
-				if (bIsCenter == true) {
-					Shape* circle = new Circle(nCenterX, nCenterY, nRadius);
-					m_pPaper->Add(circle);
-					break;
-				}
-				if (nCenterX < shape->GetX())
-					nCenterY--;
-				else {
-					nCenterY++;
 				}
 			}
-			for (nCenterX; nCenterX > shape->GetX() - nRadius && bIsCenter == false; nCenterX--)
-			{
-				bIsCenter = true;
-				for (int i = 0; i < m_pPaper->GetDotCount(); i++)
-				{
-					Shape* dot = m_pPaper->GetAt(i);
-					nDistance = sqrt(pow(nCenterX - dot->GetX(), 2) + pow(nCenterY - dot->GetY(), 2));
-					if (abs(nDistance - nRadius) > 1)
-					{
-						bIsCenter = false;
-						break;
-					}
-				}
-				if (bIsCenter == true) {
-					if (m_pPaper->GetCircle() != 0)
-					{
-						delete m_pPaper->GetCircle();
-						m_pPaper->SetCircle(nullptr);
-					}
-					Shape* circle = new Circle(nCenterX, nCenterY, nRadius);
-					m_pPaper->Add(circle);
-					break;
-				}
-				if (nCenterX > shape->GetX())
-					nCenterY++;
-				else {
-					nCenterY--;
-				}
-			}
-			if (bIsCenter == false)
+
+			auto end = std::chrono::high_resolution_clock::now();
+			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+			TRACE(_T("MouseMove Time: %lld ms\n"), duration.count());
+			if (bIsCenter == true)
 			{
 				if (m_pPaper->GetCircle() != 0)
-				{
 					delete m_pPaper->GetCircle();
-					m_pPaper->SetCircle(nullptr);
-				}
-				
+				Shape* circle = new Circle(x, y, nRadius);
+				m_pPaper->Add(circle);
 			}
-		}
+			else {
+				delete m_pPaper->GetCircle();
+				m_pPaper->SetCircle(nullptr);
+			}
 
+		}
 		Invalidate(FALSE);
 	}
-
 }
 
 void MainView::OnBnClickedButtonRandom()

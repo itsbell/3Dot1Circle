@@ -22,7 +22,9 @@ public:
 	Shape* GetCircle() const { return m_pCircle; };
 	size_t GetDotCount() const { return m_vecDots.size(); };
 	Shape* GetFocusDot() const { return m_pFocusDot; };
+	int GetHeight() const { return m_nHeight; };
 	int GetThickness() const { return m_nThickness; };
+	int GetWidth() const { return m_nWidth; }
 	
 	void SetCircle(Shape* shape) { m_pCircle = shape; };
 	void SetThickness(int thickness) { m_nThickness = thickness; };
