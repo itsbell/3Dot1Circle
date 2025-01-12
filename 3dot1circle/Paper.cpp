@@ -103,13 +103,9 @@ void Paper::Draw(CDC* dc)
 			}
 		}
 	}
-
-	
 	
 	if (m_pCircle != 0)
 	{
-		// 시작 시간 기록
-		auto start = std::chrono::high_resolution_clock::now();
 		nCenterX = m_pCircle->GetX();
 		nCenterY = m_pCircle->GetY();
 		nRadius = m_pCircle->GetRadius();
@@ -129,11 +125,6 @@ void Paper::Draw(CDC* dc)
 					m_pBits[y * m_nPitch + x] = BLACK;
 			}
 		}
-		// 종료 시간 기록
-		auto end = std::chrono::high_resolution_clock::now();
-		// 실행 시간 계산 (밀리초 단위)
-		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-		TRACE(_T("Drawing Time: %lld ms\n"), duration.count());
 	}
 
 	m_CImage->Draw(*dc, 0, PADDING);
