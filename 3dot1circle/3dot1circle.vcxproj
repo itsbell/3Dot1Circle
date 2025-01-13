@@ -130,8 +130,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
-    <ClInclude Include="DrawingManager.h" />
+    <ClInclude Include="DrawManager.h" />
     <ClInclude Include="MainView.h" />
+    <ClInclude Include="Math.h" />
     <ClInclude Include="Paper.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ThreadPool.h" />
@@ -139,8 +140,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
-    <ClCompile Include="DrawingManager.cpp" />
+    <ClCompile Include="DrawManager.cpp" />
     <ClCompile Include="MainView.cpp" />
+    <ClCompile Include="Math.cpp" />
     <ClCompile Include="Paper.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="ThreeDotOneCircleApp.cpp" />
