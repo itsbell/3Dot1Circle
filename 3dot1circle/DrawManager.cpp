@@ -4,7 +4,7 @@
 #include <atlimage.h>
 
 
-DrawManager* DrawManager::m_pInstance = nullptr;
+std::shared_ptr<DrawManager> DrawManager::m_pInstance = nullptr;
 
 DrawManager::DrawManager()
 {
@@ -15,8 +15,6 @@ DrawManager::~DrawManager()
 {
 	if (m_pThreadPool != 0)
 		delete m_pThreadPool;
-	if (m_pInstance != 0)
-		delete m_pInstance;
 }
 
 void DrawManager::Draw(CDC* pDC, CImage* pImage, std::vector<Shape*>& shapes)
