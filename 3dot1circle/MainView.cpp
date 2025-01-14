@@ -143,8 +143,8 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 							y = cpCenter.y + (dot2->GetX() - dot1->GetX()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
 							candidate2 = CPoint(x, y);
 
-							dDistance1 = sqrt(pow(dot3->GetX() - candidate1.x, 2) + pow(dot3->GetY() - candidate1.y, 2));
-							dDistance2 = sqrt(pow(dot3->GetX() - candidate2.x, 2) + pow(dot3->GetY() - candidate2.y, 2));
+							dDistance1 = Math::Distance(dot3->GetPoint(), candidate1);
+							dDistance2 = Math::Distance(dot3->GetPoint(), candidate2);
 
 							if (m_pPaper->GetCircle() != nullptr)
 								m_pPaper->DeleteCircle();
