@@ -135,113 +135,127 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 							CPoint candidate1, candidate2;
 							CPoint cpCenter = Math::Center(dot1->GetPoint(), dot2->GetPoint());
 
-							x = cpCenter.x + (dot2->GetY() - dot1->GetY()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
-							y = cpCenter.y - (dot2->GetX() - dot1->GetX()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
-							candidate1 = CPoint(x, y);
+							// 중심 후보 계산
+							double h = sqrt(nRadius * nRadius - pow(dDistance / 2, 2));
+							double dx = (dot2->GetY() - dot1->GetY()) / dDistance;
+							double dy = (dot2->GetX() - dot1->GetX()) / dDistance;
 
-							x = cpCenter.x - (dot2->GetY() - dot1->GetY()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
-							y = cpCenter.y + (dot2->GetX() - dot1->GetX()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
-							candidate2 = CPoint(x, y);
+							// 두 후보 중심
+							double cx1 = cpCenter.x + h * dx;
+							double cy1 = cpCenter.y - h * dy;
 
-							dDistance1 = Math::Distance(dot3->GetPoint(), candidate1);
-							dDistance2 = Math::Distance(dot3->GetPoint(), candidate2);
+							double cx2 = cpCenter.x - h * dx;
+							double cy2 = cpCenter.y + h * dy;
+
+							// 세 번째 점 확인
+							auto isOnCircle = [&](double cx, double cy) {
+								return abs(sqrt(pow(dot3->GetX() - cx, 2) + pow(dot3->GetY() - cy, 2)) - nRadius) < 1e-6;
+								};
 
 							if (m_pPaper->GetCircle() != nullptr)
 								m_pPaper->DeleteCircle();
-							if (fabs(dDistance1 - nRadius) < 2) {
+
+							if (isOnCircle(cx1, cy1)) {
 								Shape* circle = new Circle(candidate1.x, candidate1.y, nRadius);
 								m_pPaper->Add(circle);
 							}
-							else if (fabs(dDistance2 - nRadius) < 2) {
+							else if (isOnCircle(cx2, cy2)) {
 								Shape* circle = new Circle(candidate2.x, candidate2.y, nRadius);
 								m_pPaper->Add(circle);
 							}
 						}
 					}
 				}
-				Invalidate(FALSE);
+					Invalidate(FALSE);
 			}
 		}
 		else
 			AfxMessageBox(errorMessage);
 	}
-	CDialog::OnLButtonDown(nFlags, point);
+		CDialog::OnLButtonDown(nFlags, point);
 }
 
-void MainView::OnLButtonUp(UINT nFlags, CPoint point)
-{
-	m_pPaper->SetFocusDot(nullptr);
-}
-
-void MainView::OnMouseMove(UINT nFlags, CPoint point)
-{
-	Shape* shape = m_pPaper->GetFocusDot();
-	if (shape != nullptr)
+	void MainView::OnLButtonUp(UINT nFlags, CPoint point)
 	{
-		point.y -= PADDING;
-		m_pPaper->Move(point);
+		m_pPaper->SetFocusDot(nullptr);
+	}
 
-		size_t nDotCnt = m_pPaper->GetDotCount();
-		if (nDotCnt == MAX_DOTS)
+	void MainView::OnMouseMove(UINT nFlags, CPoint point)
+	{
+		Shape* shape = m_pPaper->GetFocusDot();
+		if (shape != nullptr)
 		{
-			auto start = std::chrono::high_resolution_clock::now();
+			point.y -= PADDING;
+			m_pPaper->Move(point);
 
-
-			CString strRadius;
-
-			m_CEditRadius.GetWindowText(strRadius);
-			int nRadius = _ttoi(strRadius);
-
-			Shape* dot1 = m_pPaper->GetAt(0);
-			Shape* dot2 = m_pPaper->GetAt(1);
-			Shape* dot3 = m_pPaper->GetAt(2);
-			double area = abs(dot1->GetX() * (dot2->GetY() - dot3->GetY()) + dot2->GetX() * (dot3->GetY() - dot1->GetY()) + dot3->GetX() * (dot1->GetY() - dot2->GetY())) / 2.0f;
-			if (area > 0)
+			size_t nDotCnt = m_pPaper->GetDotCount();
+			if (nDotCnt == MAX_DOTS)
 			{
-				double dDistance = sqrt(pow(dot2->GetX() - dot1->GetX(), 2) + pow(dot2->GetY() - dot1->GetY(), 2));
-				if (dDistance <= nRadius * 2)
+				auto start = std::chrono::high_resolution_clock::now();
+
+
+				CString strRadius;
+
+				m_CEditRadius.GetWindowText(strRadius);
+				int nRadius = _ttoi(strRadius);
+
+				Shape* dot1 = m_pPaper->GetAt(0);
+				Shape* dot2 = m_pPaper->GetAt(1);
+				Shape* dot3 = m_pPaper->GetAt(2);
+				double area = abs(dot1->GetX() * (dot2->GetY() - dot3->GetY()) + dot2->GetX() * (dot3->GetY() - dot1->GetY()) + dot3->GetX() * (dot1->GetY() - dot2->GetY())) / 2.0f;
+				if (area > 0)
 				{
-					int x, y;
-					double dDistance1, dDistance2;
-					CPoint candidate1, candidate2;
-					CPoint cpCenter((dot1->GetX() + dot2->GetX()) / 2, (dot1->GetY() + dot2->GetY()) / 2);
+					double dDistance = Math::Distance(CPoint(dot1->GetX(), dot1->GetY()), CPoint(dot2->GetX(), dot2->GetY()));
+					if (dDistance <= nRadius * 2)
+					{
+						int x, y;
+						double dDistance1, dDistance2;
+						CPoint candidate1, candidate2;
+						CPoint cpCenter = Math::Center(CPoint(dot1->GetX(), dot1->GetY()), CPoint(dot2->GetX(), dot2->GetY()));
 
-					x = cpCenter.x + (dot2->GetY() - dot1->GetY()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
-					y = cpCenter.y - (dot2->GetX() - dot1->GetX()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
-					candidate1 = CPoint(x, y);
+						// 중심 후보 계산
+						double h = sqrt(nRadius * nRadius - pow(dDistance / 2, 2));
+						double dx = (dot2->GetY() - dot1->GetY()) / dDistance;
+						double dy = (dot2->GetX() - dot1->GetX()) / dDistance;
 
-					x = cpCenter.x - (dot2->GetY() - dot1->GetY()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
-					y = cpCenter.y + (dot2->GetX() - dot1->GetX()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
-					candidate2 = CPoint(x, y);
+						// 두 후보 중심
+						double cx1 = cpCenter.x + h * dx;
+						double cy1 = cpCenter.y - h * dy;
 
-					dDistance1 = sqrt(pow(dot3->GetX() - candidate1.x, 2) + pow(dot3->GetY() - candidate1.y, 2));
-					dDistance2 = sqrt(pow(dot3->GetX() - candidate2.x, 2) + pow(dot3->GetY() - candidate2.y, 2));
+						double cx2 = cpCenter.x - h * dx;
+						double cy2 = cpCenter.y + h * dy;
 
-					if (m_pPaper->GetCircle() != nullptr)
-						m_pPaper->DeleteCircle();
-					if (fabs(dDistance1 - nRadius) < 2) {
-						Shape* circle = new Circle(candidate1.x, candidate1.y, nRadius);
-						m_pPaper->Add(circle);
-					}
-					else if (fabs(dDistance2 - nRadius) < 2) {
-						Shape* circle = new Circle(candidate2.x, candidate2.y, nRadius);
-						m_pPaper->Add(circle);
+						// 세 번째 점 확인
+						auto isOnCircle = [&](double cx, double cy) {
+							return abs(sqrt(pow(dot3->GetX() - cx, 2) + pow(dot3->GetY() - cy, 2)) - nRadius) < 2;
+							};
+
+						if (m_pPaper->GetCircle() != nullptr)
+							m_pPaper->DeleteCircle();
+
+						if (isOnCircle(cx1, cy1)) {
+							Shape* circle = new Circle(cx1, cy1, nRadius);
+							m_pPaper->Add(circle);
+						}
+						else if (isOnCircle(cx2, cy2)) {
+							Shape* circle = new Circle(cx2, cy2, nRadius);
+							m_pPaper->Add(circle);
+						}
 					}
 				}
 			}
+			Invalidate(FALSE);
 		}
+	}
+
+	void MainView::OnBnClickedButtonRandom()
+	{
+	}
+
+
+	void MainView::OnBnClickedButtonReset()
+	{
+		m_pPaper->Clear();
 		Invalidate(FALSE);
 	}
-}
-
-void MainView::OnBnClickedButtonRandom()
-{
-}
-
-
-void MainView::OnBnClickedButtonReset()
-{
-	m_pPaper->Clear();
-	Invalidate(FALSE);
-}
 

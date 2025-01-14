@@ -11,9 +11,9 @@ class Shape;
 class DrawManager {
 	
 public:
-	static DrawManager* GetInstance() {
+	static std::shared_ptr<DrawManager> GetInstance() {
 		if (m_pInstance == nullptr)
-			m_pInstance = new DrawManager();
+			m_pInstance = std::shared_ptr<DrawManager>(new DrawManager());
 		return m_pInstance;
 	}
 	~DrawManager();
@@ -23,11 +23,12 @@ public:
 	void SetThickness(int thickness) { m_nThickness = thickness; };
 
 private:
-	static DrawManager* m_pInstance;
+	static std::shared_ptr<DrawManager> m_pInstance;
 	DrawManager();
 
 	ThreadPool* m_pThreadPool;
 	int m_nThickness;
 };
+
 
 #endif //_DRAWMANAGER_H
