@@ -123,17 +123,17 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 					Shape* dot1 = m_pPaper->GetAt(0);
 					Shape* dot2 = m_pPaper->GetAt(1);
 					Shape* dot3 = m_pPaper->GetAt(2);
-					double area = Math::Area(CPoint(dot1->GetX(), dot1->GetY()), CPoint(dot2->GetX(), dot2->GetY()), CPoint(dot3->GetX(), dot3->GetY()));
+					double area = Math::Area(dot1->GetPoint(), dot2->GetPoint(), dot3->GetPoint());
 
 					if (area > 0)
 					{
-						double dDistance = Math::Distance(CPoint(dot1->GetX(), dot1->GetY()), CPoint(dot2->GetX(), dot2->GetY()));
+						double dDistance = Math::Distance(dot1->GetPoint(), dot2->GetPoint());
 						if (dDistance <= nRadius * 2)
 						{
 							int x, y;
 							double dDistance1, dDistance2;
 							CPoint candidate1, candidate2;
-							CPoint cpCenter = Math::Center(CPoint(dot1->GetX(), dot1->GetY()), CPoint(dot2->GetX(), dot2->GetY()));
+							CPoint cpCenter = Math::Center(dot1->GetPoint(), dot2->GetPoint());
 
 							x = cpCenter.x + (dot2->GetY() - dot1->GetY()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);
 							y = cpCenter.y - (dot2->GetX() - dot1->GetX()) * (sqrt(pow(nRadius, 2) - pow(dDistance / 2, 2)) / dDistance);

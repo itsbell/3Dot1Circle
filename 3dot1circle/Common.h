@@ -32,6 +32,7 @@ public:
 
 	virtual int GetX() const = 0;
 	virtual int GetY() const = 0;
+	virtual CPoint GetPoint() { return CPoint(); };
 	virtual int GetRadius() const { return 0; };
 	virtual void SetX(int val) = 0;
 	virtual void SetY(int val) = 0;
@@ -48,6 +49,7 @@ public:
 
 	int GetX() const override { return x; };
 	int GetY() const override { return y; };
+	CPoint GetPoint() { return CPoint(x,y); };
 	void SetX(int val) override { x = val; };
 	void SetY(int val) override { y = val; };
 
