@@ -8,13 +8,10 @@ std::shared_ptr<DrawManager> DrawManager::m_pInstance = nullptr;
 
 DrawManager::DrawManager()
 {
-	m_pThreadPool = new ThreadPool(1);
 }
 
 DrawManager::~DrawManager()
 {
-	if (m_pThreadPool != 0)
-		delete m_pThreadPool;
 }
 
 void DrawManager::Draw(CDC* pDC, CImage* pImage, std::vector<Shape*>& shapes)

@@ -1,9 +1,11 @@
 //DrawManager.h
 #ifndef _DRAWMANAGER_H
 #define _DRAWMANAGER_H
-#include "ThreadPool.h"
-#include <afxwin.h>
-#include <atlimage.h>
+
+#include <afxwin.h>  // MFC CDC 클래스
+#include <atlimage.h> // ATL CImage 클래스
+#include <memory>    // std::shared_ptr
+#include <vector>    // std::vector
 
 #define DRAW_MGR DrawManager::GetInstance()
 
@@ -26,7 +28,6 @@ private:
 	static std::shared_ptr<DrawManager> m_pInstance;
 	DrawManager();
 
-	ThreadPool* m_pThreadPool;
 	int m_nThickness;
 };
 

@@ -1,5 +1,6 @@
 //Math.cpp
 #include "Math.h"
+#include <random>
 
 Math::Math()
 {
@@ -22,4 +23,13 @@ CPoint Math::Center(CPoint a, CPoint b)
 double Math::Distance(CPoint a, CPoint b)
 {
 	return sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
+}
+
+int Math::Random(int min, int max)
+{
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> distrib(min, max);
+
+	return distrib(gen);
 }

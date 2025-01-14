@@ -1,6 +1,24 @@
 ﻿#pragma once
 #include "afxdialogex.h"
 #include "resource.h"
+#include <string>
+
+namespace MAIN_VIEW_MSG
+{
+	enum VIEW_MSG
+	{
+		RESET = 0,
+		COORDINATE_MOUSE,
+		COORDINATE_SHAPE,
+	};
+}
+
+enum ERROR_CODE
+{
+	ERROR_INVAILD_RADIUS = 0,
+	ERROR_INVAILD_THICKNESS,
+
+};
 
 class Paper;
 class MainView : public CDialog
@@ -12,6 +30,8 @@ public:
 	virtual ~MainView();
 
 	virtual BOOL OnInitDialog();
+	void RefreshViewData(int nMsg);
+	const std::string GetErrorMsgString(ERROR_CODE nErrorCode);
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.

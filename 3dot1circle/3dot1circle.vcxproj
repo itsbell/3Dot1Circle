@@ -135,8 +135,10 @@
     <ClInclude Include="Math.h" />
     <ClInclude Include="Paper.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SimulationManager.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="ThreeDotOneCircleApp.h" />
+    <ClInclude Include="ViewManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
@@ -144,8 +146,10 @@
     <ClCompile Include="MainView.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Paper.cpp" />
+    <ClCompile Include="SimulationManager.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="ThreeDotOneCircleApp.cpp" />
+    <ClCompile Include="ViewManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ThreeDotOneCircle.rc" />

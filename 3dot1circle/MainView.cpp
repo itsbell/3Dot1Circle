@@ -2,10 +2,16 @@
 
 #include "afxdialogex.h"
 #include "MainView.h"
-#include "Paper.h"
+
 #include "Common.h"
-#include "DrawManager.h"
 #include "Math.h"
+#include "Paper.h"
+
+#include "DrawManager.h"
+#include "SimulationManager.h"
+#include "ViewManager.h"
+
+using namespace MAIN_VIEW_MSG;
 
 IMPLEMENT_DYNAMIC(MainView, CDialog)
 
@@ -35,6 +41,7 @@ BOOL MainView::OnInitDialog()
 
 	m_pPaper = new Paper();
 	DRAW_MGR->Erase(m_pPaper->GetImage());
+	VIEW_MGR->SetMainView(this);
 
 	m_CEditRadius.SetWindowText(_T("100"));
 	m_CEditThickness.SetWindowText(_T("10"));
@@ -42,6 +49,33 @@ BOOL MainView::OnInitDialog()
 	Invalidate(FALSE);
 
 	return TRUE;
+}
+
+void MainView::RefreshViewData(int nMsg)
+{
+	switch (nMsg)
+	{
+	case RESET:
+		break;
+	case COORDINATE_MOUSE:
+		break;
+	case COORDINATE_SHAPE:
+		break;
+	default: break;
+	}
+}
+
+const std::string MainView::GetErrorMsgString(ERROR_CODE nErrorCode)
+{
+	std::string strErrorMsg;
+
+	switch (nErrorCode)
+	{
+		case ERROR_INVAILD_RADIUS:		strErrorMsg = ""; break;
+		case ERROR_INVAILD_THICKNESS:	strErrorMsg = ""; break;
+		default: break;
+	}
+	return strErrorMsg;
 }
 
 void MainView::DoDataExchange(CDataExchange* pDX)
@@ -66,7 +100,6 @@ void MainView::OnClose()
 
 	CDialog::EndDialog(0);
 }
-
 
 void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 {
@@ -250,6 +283,40 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 
 	void MainView::OnBnClickedButtonRandom()
 	{
+
+		bool isValid = true;
+		CString errorMessage;
+
+		CString strRadius, strThickness;
+		m_CEditRadius.GetWindowText(strRadius);
+		m_CEditThickness.GetWindowText(strThickness);
+
+		int nRadius = _ttoi(strRadius);
+		int nThickness = _ttoi(strThickness);
+
+		if (strRadius.IsEmpty()) {
+			errorMessage = _T("원의 반지름을 입력해주세요.");
+			isValid = false;
+		}
+		else if (strThickness.IsEmpty()) {
+			errorMessage = _T("원의 가장자리 두께를 입력해주세요.");
+			isValid = false;
+		}
+		else if (nRadius == 0) {
+			errorMessage = _T("반지름은 0이 될 수 없어요.");
+			isValid = false;
+		}
+		else if (nThickness == 0) {
+			errorMessage = _T("가장자리 두께는 0이 될 수 없어요.");
+			isValid = false;
+		}
+
+		if (isValid == true)
+		{
+			m_pPaper->Clear();
+			DRAW_MGR->SetThickness(nThickness);
+			SIMUL_MGR->Simulate(m_pPaper, nRadius);
+		}
 	}
 
 
