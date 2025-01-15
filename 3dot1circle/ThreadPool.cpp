@@ -1,5 +1,6 @@
 //ThreadPool.cpp
 #include "ThreadPool.h"
+#include <afx.h>
 
 ThreadPool::ThreadPool(size_t threadCount)
 	:stop(false)
@@ -40,11 +41,14 @@ void ThreadPool::workerThread()
 			std::unique_lock<std::mutex> lock(mtx);
 			cv.wait(lock, [this] { return stop || !tasks.empty(); });
 			if (stop && tasks.empty()) return;
+			
+			if(!tasks.empty())
 			{
 				task = std::move(tasks.front());
 				tasks.pop();
 			}
-			task();
 		}
+		if(task)
+			task();
 	}
 }

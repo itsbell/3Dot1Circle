@@ -40,6 +40,7 @@ void DrawManager::Draw(CDC* pDC, CImage* pImage, std::vector<Shape*>& shapes)
 			nCenterY = pDot->GetY();
 
 			nRadius = m_nThickness;
+			if (nRadius == 1) nRadius = 2;
 			nMaxX = nCenterX + nRadius;
 			nMaxY = nCenterY + nRadius;
 			if (nMaxX > nWidth) nMaxX = nWidth;
@@ -60,22 +61,24 @@ void DrawManager::Draw(CDC* pDC, CImage* pImage, std::vector<Shape*>& shapes)
 		}
 		else if (Circle* pCircle = dynamic_cast<Circle*>(shape))
 		{
+			int nHalfThickness = m_nThickness / 2;
+			if (nHalfThickness == 0) nHalfThickness = 1;
 			nCenterX = pCircle->GetX();
 			nCenterY = pCircle->GetY();
 			nRadius = pCircle->GetRadius();
-			nMaxX = nCenterX + nRadius + m_nThickness / 2;
-			nMaxY = nCenterY + nRadius + m_nThickness / 2;;
+			nMaxX = nCenterX + nRadius + nHalfThickness;
+			nMaxY = nCenterY + nRadius + nHalfThickness;
 			if (nMaxX > nWidth) nMaxX = nWidth;
 			if (nMaxY > nHeight) nMaxY = nHeight;
 
-			x = nCenterX - nRadius - m_nThickness / 2;
+			x = nCenterX - nRadius - nHalfThickness;
 			for (x; x < nMaxX; x++) {
 				if (x < 0) x = 0;
-				y = nCenterY - nRadius - m_nThickness / 2;
+				y = nCenterY - nRadius - nHalfThickness;
 				if (y < 0) y = 0;
 				for (y; y < nMaxY; y++) {
 					dDistance = sqrt(pow(nCenterX - x, 2) + pow(nCenterY - y, 2));
-					if (dDistance >= nRadius - m_nThickness / 2 && dDistance <= nRadius + m_nThickness / 2)
+					if (dDistance >= nRadius - nHalfThickness && dDistance <= nRadius + nHalfThickness)
 						pBits[y * nPitch + x] = BLACK;
 				}
 			}

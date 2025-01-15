@@ -30,7 +30,6 @@ public:
 private:
 	std::vector<Shape*> m_vecShape;
 	std::vector<Shape*> m_vecDots;
-	std::list<Shape*> m_listDots; // z-order
 	
 	CImage* m_pImage;
 	Shape* m_pFocusDot;

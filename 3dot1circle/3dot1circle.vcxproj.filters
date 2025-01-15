@@ -54,9 +54,6 @@
     <ClInclude Include="SimulationManager.h">
       <Filter>Control</Filter>
     </ClInclude>
-    <ClInclude Include="ViewManager.h">
-      <Filter>Control</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThreeDotOneCircleApp.cpp">
@@ -81,9 +78,6 @@
       <Filter>Library</Filter>
     </ClCompile>
     <ClCompile Include="SimulationManager.cpp">
-      <Filter>Control</Filter>
-    </ClCompile>
-    <ClCompile Include="ViewManager.cpp">
       <Filter>Control</Filter>
     </ClCompile>
   </ItemGroup>

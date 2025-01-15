@@ -9,7 +9,6 @@
 
 #include "DrawManager.h"
 #include "SimulationManager.h"
-#include "ViewManager.h"
 
 using namespace MAIN_VIEW_MSG;
 
@@ -41,7 +40,6 @@ BOOL MainView::OnInitDialog()
 
 	m_pPaper = new Paper();
 	DRAW_MGR->Erase(m_pPaper->GetImage());
-	VIEW_MGR->SetMainView(this);
 
 	m_CEditRadius.SetWindowText(_T("100"));
 	m_CEditThickness.SetWindowText(_T("10"));
@@ -51,28 +49,65 @@ BOOL MainView::OnInitDialog()
 	return TRUE;
 }
 
-void MainView::RefreshViewData(int nMsg)
+void MainView::RefreshViewData(int nMsg, CPoint point /* = 0*/)
 {
+	CString text;
+	
 	switch (nMsg)
 	{
-	case RESET:
-		break;
-	case COORDINATE_MOUSE:
-		break;
-	case COORDINATE_SHAPE:
-		break;
-	default: break;
+		case RESET:
+			text = "";
+			GetDlgItem(IDC_STATIC_COORDINATE)->SetWindowText(text);
+			GetDlgItem(IDC_STATIC_SHAPE_COORDINATE)->SetWindowText(text);
+			break;
+
+		case COORDINATE_MOUSE:
+			text.Format("(%03d,%03d)", point.x, point.y);
+			GetDlgItem(IDC_STATIC_COORDINATE)->SetWindowText(text);
+			break;
+
+		case COORDINATE_SHAPE:
+			Shape* shape;
+			for (int i = 0; i < m_pPaper->GetShapes().size(); i++)
+			{
+				if (i > 0)
+				{
+					text.Format("%s | ", text);
+				}
+				shape = m_pPaper->GetShapes()[i];
+				if (Dot* dot = dynamic_cast<Dot*>(shape))
+				{
+					text.Format("%s점%d: (%03d,%03d)", text, i + 1, shape->GetX(), shape->GetY());
+				}
+				else if(Circle* circle = dynamic_cast<Circle*>(shape))
+				{
+					text.Format("%s원: (%03d,%03d)", text, shape->GetX(), shape->GetY());
+				}
+			}
+			GetDlgItem(IDC_STATIC_SHAPE_COORDINATE)->SetWindowText(text);
+			break;
+
+		case ENABLE_WINDOW_TRUE:
+			m_CEditRadius.EnableWindow(TRUE);
+			m_CEditThickness.EnableWindow(TRUE);
+			m_CButtonRandom.EnableWindow(TRUE);
+
+		default:
+			break;
 	}
 }
 
-const std::string MainView::GetErrorMsgString(ERROR_CODE nErrorCode)
+CString MainView::GetErrorMsgString(ERROR_CODE nErrorCode)
 {
-	std::string strErrorMsg;
+	CString strErrorMsg;
 
 	switch (nErrorCode)
 	{
-		case ERROR_INVAILD_RADIUS:		strErrorMsg = ""; break;
-		case ERROR_INVAILD_THICKNESS:	strErrorMsg = ""; break;
+		case ERROR_RADIUS_EMPTY:		strErrorMsg = "원의 반지름을 입력해주세요.";		break;
+		case ERROR_THICKNESS_EMPTY:		strErrorMsg = "원의 가장자리 두께를 입력해주세요."; break;
+		case ERROR_RADIUS_ZERO:			strErrorMsg = "반지름은 0이 될 수 없어요.";			break;
+		case ERROR_THICKNESS_ZERO:		strErrorMsg = "가장자리 두께는 0이 될 수 없어요.";	break;
+
 		default: break;
 	}
 	return strErrorMsg;
@@ -83,11 +118,13 @@ void MainView::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_RADIUS, m_CEditRadius);
 	DDX_Control(pDX, IDC_EDIT_THICKNESS, m_CEditThickness);
+	DDX_Control(pDX, IDC_BUTTON_RANDOM, m_CButtonRandom);
 }
 
 void MainView::OnPaint()
 {
 	CPaintDC dc(this);
+
 	DRAW_MGR->Erase(m_pPaper->GetImage());
 	DRAW_MGR->Draw(&dc, m_pPaper->GetImage(), m_pPaper->GetShapes());
 }
@@ -103,70 +140,76 @@ void MainView::OnClose()
 
 void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	point.y -= PADDING;
-	if (point.y >= 0)
+	if (SIMUL_MGR->IsRun() == false)
 	{
-		bool isValid = true;
-		CString errorMessage;
-
-		CString strRadius, strThickness;
-		m_CEditRadius.GetWindowText(strRadius);
-		m_CEditThickness.GetWindowText(strThickness);
-
-		int nRadius = _ttoi(strRadius);
-		int nThickness = _ttoi(strThickness);
-
-		if (strRadius.IsEmpty()) {
-			errorMessage = _T("원의 반지름을 입력해주세요.");
-			isValid = false;
-		}
-		else if (strThickness.IsEmpty()) {
-			errorMessage = _T("원의 가장자리 두께를 입력해주세요.");
-			isValid = false;
-		}
-		else if (nRadius == 0) {
-			errorMessage = _T("반지름은 0이 될 수 없어요.");
-			isValid = false;
-		}
-		else if (nThickness == 0) {
-			errorMessage = _T("가장자리 두께는 0이 될 수 없어요.");
-			isValid = false;
-		}
-
-		if (isValid == true)
+		point.y -= PADDING;
+		if (point.y >= 0)
 		{
-			DRAW_MGR->SetThickness(nThickness);
+			bool isValid = true;
+			ERROR_CODE nErrorCode;
 
-			Shape* shape = nullptr;
-			shape = m_pPaper->FindByPoint(point, nThickness);
-			if (shape != nullptr)
-				m_pPaper->SetFocusDot(shape);
-			else
+			CString strRadius, strThickness;
+			m_CEditRadius.GetWindowText(strRadius);
+			m_CEditThickness.GetWindowText(strThickness);
+
+			int nRadius = _ttoi(strRadius);
+			int nThickness = _ttoi(strThickness);
+
+			if (strRadius.IsEmpty()) {
+				nErrorCode = ERROR_RADIUS_EMPTY;
+				isValid = false;
+			}
+			else if (strThickness.IsEmpty()) {
+				nErrorCode = ERROR_THICKNESS_EMPTY;
+				isValid = false;
+			}
+			else if (nRadius == 0) {
+				nErrorCode = ERROR_RADIUS_ZERO;
+				isValid = false;
+			}
+			else if (nThickness == 0) {
+				nErrorCode = ERROR_THICKNESS_ZERO;
+				isValid = false;
+			}
+
+			if (isValid == true)
 			{
-				size_t nDotCnt = m_pPaper->GetDotCount();
-				if (nDotCnt < MAX_DOTS)
-				{
-					shape = new Dot(point);
-					m_pPaper->Add(shape);
-				}
+				DRAW_MGR->SetThickness(nThickness);
 
-				nDotCnt = m_pPaper->GetDotCount();
-				if (nDotCnt == MAX_DOTS)
+				Shape* shape = nullptr;
+				shape = m_pPaper->FindByPoint(point, nThickness);
+				if (shape != nullptr)
+					m_pPaper->SetFocusDot(shape);
+				else
 				{
+					size_t nDotCnt = m_pPaper->GetDotCount();
+					if (nDotCnt < MAX_DOTS)
+					{
+						shape = new Dot(point);
+						m_pPaper->Add(shape);
+					}
+
+					nDotCnt = m_pPaper->GetDotCount();
+					if (nDotCnt == MAX_DOTS)
+				{
+					CString strRadius;
+
+					m_CEditRadius.GetWindowText(strRadius);
+					int nRadius = _ttoi(strRadius);
+
 					Shape* dot1 = m_pPaper->GetAt(0);
 					Shape* dot2 = m_pPaper->GetAt(1);
 					Shape* dot3 = m_pPaper->GetAt(2);
-					double area = Math::Area(dot1->GetPoint(), dot2->GetPoint(), dot3->GetPoint());
-
+					double area = abs(dot1->GetX() * (dot2->GetY() - dot3->GetY()) + dot2->GetX() * (dot3->GetY() - dot1->GetY()) + dot3->GetX() * (dot1->GetY() - dot2->GetY())) / 2.0f;
 					if (area > 0)
 					{
-						double dDistance = Math::Distance(dot1->GetPoint(), dot2->GetPoint());
+						double dDistance = Math::Distance(CPoint(dot1->GetX(), dot1->GetY()), CPoint(dot2->GetX(), dot2->GetY()));
 						if (dDistance <= nRadius * 2)
 						{
 							int x, y;
 							double dDistance1, dDistance2;
 							CPoint candidate1, candidate2;
-							CPoint cpCenter = Math::Center(dot1->GetPoint(), dot2->GetPoint());
+							CPoint cpCenter = Math::Center(CPoint(dot1->GetX(), dot1->GetY()), CPoint(dot2->GetX(), dot2->GetY()));
 
 							// 중심 후보 계산
 							double h = sqrt(nRadius * nRadius - pow(dDistance / 2, 2));
@@ -182,30 +225,35 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 
 							// 세 번째 점 확인
 							auto isOnCircle = [&](double cx, double cy) {
-								return abs(sqrt(pow(dot3->GetX() - cx, 2) + pow(dot3->GetY() - cy, 2)) - nRadius) < 1e-6;
+								return abs(sqrt(pow(dot3->GetX() - cx, 2) + pow(dot3->GetY() - cy, 2)) - nRadius) < 2;
 								};
 
 							if (m_pPaper->GetCircle() != nullptr)
 								m_pPaper->DeleteCircle();
 
 							if (isOnCircle(cx1, cy1)) {
-								Shape* circle = new Circle(candidate1.x, candidate1.y, nRadius);
+								Shape* circle = new Circle(cx1, cy1, nRadius);
 								m_pPaper->Add(circle);
 							}
 							else if (isOnCircle(cx2, cy2)) {
-								Shape* circle = new Circle(candidate2.x, candidate2.y, nRadius);
+								Shape* circle = new Circle(cx2, cy2, nRadius);
 								m_pPaper->Add(circle);
 							}
 						}
 					}
 				}
+					RefreshViewData(COORDINATE_SHAPE);
 					Invalidate(FALSE);
+				}
+			}
+			else
+			{
+				CString strErrorMsg = GetErrorMsgString(nErrorCode);
+				AfxMessageBox(strErrorMsg);
 			}
 		}
-		else
-			AfxMessageBox(errorMessage);
 	}
-		CDialog::OnLButtonDown(nFlags, point);
+	CDialog::OnLButtonDown(nFlags, point);
 }
 
 	void MainView::OnLButtonUp(UINT nFlags, CPoint point)
@@ -215,18 +263,28 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 
 	void MainView::OnMouseMove(UINT nFlags, CPoint point)
 	{
-		Shape* shape = m_pPaper->GetFocusDot();
-		if (shape != nullptr)
+		if (point.y >= PADDING)
 		{
-			point.y -= PADDING;
-			m_pPaper->Move(point);
+			int x = point.x;
+			int y = point.y - PADDING;
+			if (x < 0) x = 0;
+			if (x > m_pPaper->GetImage()->GetWidth()) x = m_pPaper->GetImage()->GetWidth();
+			if (y < 0) y = 0;
+			if (y > m_pPaper->GetImage()->GetHeight()) y = m_pPaper->GetImage()->GetHeight();
+			RefreshViewData(COORDINATE_MOUSE, CPoint(x,y));
+		}
+		if (SIMUL_MGR->IsRun() == false)
+		{
+			Shape* shape = m_pPaper->GetFocusDot();
+			if (shape != nullptr)
+			{
+				point.y -= PADDING;
+				m_pPaper->Move(point);
+			}
 
 			size_t nDotCnt = m_pPaper->GetDotCount();
 			if (nDotCnt == MAX_DOTS)
 			{
-				auto start = std::chrono::high_resolution_clock::now();
-
-
 				CString strRadius;
 
 				m_CEditRadius.GetWindowText(strRadius);
@@ -277,15 +335,15 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 					}
 				}
 			}
-			Invalidate(FALSE);
 		}
+		RefreshViewData(COORDINATE_SHAPE);
+		Invalidate(FALSE);
 	}
 
 	void MainView::OnBnClickedButtonRandom()
 	{
-
 		bool isValid = true;
-		CString errorMessage;
+		ERROR_CODE nErrorCode;
 
 		CString strRadius, strThickness;
 		m_CEditRadius.GetWindowText(strRadius);
@@ -295,34 +353,44 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 		int nThickness = _ttoi(strThickness);
 
 		if (strRadius.IsEmpty()) {
-			errorMessage = _T("원의 반지름을 입력해주세요.");
+			nErrorCode = ERROR_RADIUS_EMPTY;
 			isValid = false;
 		}
 		else if (strThickness.IsEmpty()) {
-			errorMessage = _T("원의 가장자리 두께를 입력해주세요.");
+			nErrorCode = ERROR_THICKNESS_EMPTY;
 			isValid = false;
 		}
 		else if (nRadius == 0) {
-			errorMessage = _T("반지름은 0이 될 수 없어요.");
+			nErrorCode = ERROR_RADIUS_ZERO;
 			isValid = false;
 		}
 		else if (nThickness == 0) {
-			errorMessage = _T("가장자리 두께는 0이 될 수 없어요.");
+			nErrorCode = ERROR_THICKNESS_ZERO;
 			isValid = false;
 		}
 
 		if (isValid == true)
 		{
+			m_CEditRadius.EnableWindow(FALSE);
+			m_CEditThickness.EnableWindow(FALSE);
+			m_CButtonRandom.EnableWindow(FALSE);
 			m_pPaper->Clear();
 			DRAW_MGR->SetThickness(nThickness);
-			SIMUL_MGR->Simulate(m_pPaper, nRadius);
+			SIMUL_MGR->RunSimulation(m_pPaper, nRadius);
+		}
+		else
+		{
+			CString strErrorMsg = GetErrorMsgString(nErrorCode);
+			AfxMessageBox(strErrorMsg);
 		}
 	}
 
-
 	void MainView::OnBnClickedButtonReset()
 	{
+		SIMUL_MGR->StopSimulation();
 		m_pPaper->Clear();
+		RefreshViewData(ENABLE_WINDOW_TRUE);
+		RefreshViewData(RESET);
 		Invalidate(FALSE);
 	}
 

@@ -16,13 +16,17 @@ public:
 		return m_pInstance;
 	}
 	~SimulationManager();
-	void Simulate(Paper* pPaper, int nRadius);
+	void RunSimulation(Paper* pPaper, int nRadius);
+	void StopSimulation();
+	bool IsRun() { return m_bIsRun; };
 
 private:
 	static std::shared_ptr<SimulationManager> m_pInstance;
 	SimulationManager();
 
 	ThreadPool* m_pThreadPool;
+	bool m_bIsRun;
+	bool m_bStop;
 };
 
 

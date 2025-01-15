@@ -2,6 +2,7 @@
 #include "SimulationManager.h"
 #include "Paper.h"
 #include "Math.h"
+#include "MainView.h"
 
 #include "resource.h"
 #include <chrono>
@@ -10,7 +11,7 @@
 std::shared_ptr<SimulationManager> SimulationManager::m_pInstance = nullptr;
 
 SimulationManager::SimulationManager()
-{
+	:m_bIsRun(false), m_bStop(false) {
 	m_pThreadPool = new ThreadPool(1);
 }
 
@@ -20,8 +21,10 @@ SimulationManager::~SimulationManager()
 		delete m_pThreadPool;
 }
 
-void SimulationManager::Simulate(Paper* pPaper, int nRadius)
+void SimulationManager::RunSimulation(Paper* pPaper, int nRadius)
 {
+	m_bIsRun = true;
+	m_bStop = false;
 	CWnd* pMainWnd = AfxGetMainWnd();
 	m_pThreadPool->enqueue([=]() {
 		int x, y, min, max, random;
@@ -32,6 +35,7 @@ void SimulationManager::Simulate(Paper* pPaper, int nRadius)
 
 		for (int i = 0; i < RANDOM_ITERATION_COUNT; i++)
 		{
+			if (m_bStop) break;
 			pPaper->Clear();
 			x = Math::Random(0, width - 1);
 			y = Math::Random(0, height - 1);
@@ -68,15 +72,19 @@ void SimulationManager::Simulate(Paper* pPaper, int nRadius)
 			if (pMainWnd)
 				pMainWnd->Invalidate();
 
-			CString text;
-			text.Format("점1: (%03d,%03d) | 점2: (%03d,%03d) | 점3: (%03d,%03d) | 원: (%03d,%03d)",
-				pPaper->GetShapes()[0]->GetX(), pPaper->GetShapes()[0]->GetY(),
-				pPaper->GetShapes()[1]->GetX(), pPaper->GetShapes()[1]->GetY(),
-				pPaper->GetShapes()[2]->GetX(), pPaper->GetShapes()[2]->GetY(),
-				pPaper->GetShapes()[3]->GetX(), pPaper->GetShapes()[3]->GetY());
-			pMainWnd->GetDlgItem(IDC_STATIC_SHAPE_COORDINATE)->SetWindowText(text);
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			dynamic_cast<MainView*>(pMainWnd)->RefreshViewData(MAIN_VIEW_MSG::COORDINATE_SHAPE);
+			if(i < RANDOM_ITERATION_COUNT - 1)
+				std::this_thread::sleep_for(std::chrono::milliseconds(INTERVAL));
 		}
+		m_bStop = true;
+		m_bIsRun = false;
+		dynamic_cast<MainView*>(pMainWnd)->RefreshViewData(MAIN_VIEW_MSG::ENABLE_WINDOW_TRUE);
 	});
 }
+
+void SimulationManager::StopSimulation()
+{
+	m_bStop = true;
+	m_bIsRun = false;
+}
+

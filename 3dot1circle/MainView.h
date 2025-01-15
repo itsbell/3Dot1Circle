@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "afxdialogex.h"
 #include "resource.h"
-#include <string>
 
 namespace MAIN_VIEW_MSG
 {
@@ -10,14 +9,16 @@ namespace MAIN_VIEW_MSG
 		RESET = 0,
 		COORDINATE_MOUSE,
 		COORDINATE_SHAPE,
+		ENABLE_WINDOW_TRUE,
 	};
 }
 
 enum ERROR_CODE
 {
-	ERROR_INVAILD_RADIUS = 0,
-	ERROR_INVAILD_THICKNESS,
-
+	ERROR_RADIUS_EMPTY = 0,
+	ERROR_THICKNESS_EMPTY,
+	ERROR_RADIUS_ZERO,
+	ERROR_THICKNESS_ZERO,
 };
 
 class Paper;
@@ -30,8 +31,7 @@ public:
 	virtual ~MainView();
 
 	virtual BOOL OnInitDialog();
-	void RefreshViewData(int nMsg);
-	const std::string GetErrorMsgString(ERROR_CODE nErrorCode);
+	void RefreshViewData(int nMsg, CPoint point = 0);
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
@@ -52,6 +52,9 @@ private:
 	Paper* m_pPaper;
 	CEdit m_CEditRadius;
 	CEdit m_CEditThickness;
+	CButton m_CButtonRandom;
+
+	CString GetErrorMsgString(ERROR_CODE nErrorCode);
 
 	DECLARE_MESSAGE_MAP()
 

@@ -32,9 +32,9 @@ void Paper::Add(Shape* shape)
 	m_vecShape.push_back(shape);
 	if (Dot* dot = dynamic_cast<Dot*>(shape)) {
 		m_vecDots.push_back(shape);
-		m_listDots.push_front(shape);
 	}
-	else if (Circle* circle = dynamic_cast<Circle*>(shape)) {
+	else if (Circle* circle = dynamic_cast<Circle*>(shape))
+	{
 		m_pCircle = shape;
 	}
 }
@@ -50,7 +50,6 @@ void Paper::Clear()
 	m_pCircle = nullptr;
 	m_vecShape.clear();
 	m_vecDots.clear();
-	m_listDots.clear();
 }
 
 void Paper::DeleteCircle()
@@ -69,10 +68,12 @@ Shape* Paper::FindByPoint(CPoint point, int nRange)
 	Shape* pDot = nullptr;
 	Shape* pResultDot = nullptr;
 
-	for (std::list<Shape*>::iterator it = m_listDots.begin(); it != m_listDots.end(); ++it) {
-		distance = sqrt(pow((*it)->GetX() - point.x, 2) + pow((*it)->GetY() - point.y, 2));
+	for (int i = 0; i < m_vecDots.size(); i++)
+	{
+		pDot = m_vecDots[i];
+		distance = sqrt(pow(pDot->GetX() - point.x, 2) + pow(pDot->GetY() - point.y, 2));
 		if (distance <= nRange) {
-			pResultDot = (*it);
+			pResultDot = pDot;
 			break;
 		}
 	}
