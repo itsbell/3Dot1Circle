@@ -41,8 +41,8 @@ BOOL MainView::OnInitDialog()
 	m_pPaper = new Paper();
 	DRAW_MGR->Erase(m_pPaper->GetImage());
 
-	m_CEditRadius.SetWindowText(_T("100"));
-	m_CEditThickness.SetWindowText(_T("10"));
+	m_CEditRadius.SetWindowText(DEFAULT_RADIUS);
+	m_CEditThickness.SetWindowText(DEFAULT_THICKNESS);
 
 	Invalidate(FALSE);
 
@@ -131,6 +131,9 @@ void MainView::OnPaint()
 
 void MainView::OnClose()
 {
+
+	SIMUL_MGR->StopSimulation();
+	std::this_thread::sleep_for(std::chrono::milliseconds(INTERVAL));
 	if (m_pPaper != 0) {
 		delete m_pPaper;
 	}
@@ -271,16 +274,15 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 			if (x > m_pPaper->GetImage()->GetWidth()) x = m_pPaper->GetImage()->GetWidth();
 			if (y < 0) y = 0;
 			if (y > m_pPaper->GetImage()->GetHeight()) y = m_pPaper->GetImage()->GetHeight();
-			RefreshViewData(COORDINATE_MOUSE, CPoint(x,y));
+			point.x = x;
+			point.y = y;
+			RefreshViewData(COORDINATE_MOUSE, point);
 		}
 		if (SIMUL_MGR->IsRun() == false)
 		{
 			Shape* shape = m_pPaper->GetFocusDot();
 			if (shape != nullptr)
-			{
-				point.y -= PADDING;
 				m_pPaper->Move(point);
-			}
 
 			size_t nDotCnt = m_pPaper->GetDotCount();
 			if (nDotCnt == MAX_DOTS)
@@ -337,7 +339,7 @@ void MainView::OnLButtonDown(UINT nFlags, CPoint point)
 			}
 		}
 		RefreshViewData(COORDINATE_SHAPE);
-		Invalidate(FALSE);
+		InvalidateRect(CRect(0, PADDING, WIDTH, HEIGHT + PADDING), FALSE);
 	}
 
 	void MainView::OnBnClickedButtonRandom()
