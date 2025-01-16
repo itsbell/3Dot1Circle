@@ -70,9 +70,7 @@ void SimulationManager::RunSimulation(Paper* pPaper, int nRadius)
 			pPaper->Add(shape);
 
 			if (pMainWnd)
-
-				pMainWnd->InvalidateRect(CRect(0, PADDING, WIDTH, HEIGHT + PADDING), FALSE);
-				//pMainWnd->Invalidate();
+				pMainWnd->Invalidate();
 
 			dynamic_cast<MainView*>(pMainWnd)->RefreshViewData(MAIN_VIEW_MSG::COORDINATE_SHAPE);
 			if(i < RANDOM_ITERATION_COUNT - 1)
